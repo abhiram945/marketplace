@@ -83,10 +83,7 @@ const Cart: React.FC = () => {
               <ul role="list" className="divide-y divide-gray-200 dark:divide-gray-700">
                 {cartItems.map(item => (
                   <li key={item.id} className="flex py-6 px-4 sm:px-6">
-                    <div className="flex-shrink-0">
-                      <img src={item.imageUrl} alt={item.title} className="w-24 h-24 rounded-md object-cover" />
-                    </div>
-                    <div className="ml-6 flex flex-1 flex-col">
+                    <div className="flex flex-1 flex-col">
                       <div className="flex">
                         <div className="min-w-0 flex-1">
                           <h4 className="text-sm">

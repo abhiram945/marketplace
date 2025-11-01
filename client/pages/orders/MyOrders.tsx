@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { mockOrders } from '../../utils/mockData';
 
@@ -37,14 +36,9 @@ const MyOrders: React.FC = () => {
               {mockOrders.map(order => (
                 <tr key={order.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <img className="h-10 w-10 rounded-full" src={order.productImageUrl} alt={order.productTitle} />
-                      </div>
-                      <div className="ml-4">
+                    <div>
                         <div className="text-sm font-medium text-gray-900 dark:text-white">{order.productTitle}</div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">Qty: {order.quantity}</div>
-                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{order.id}</td>

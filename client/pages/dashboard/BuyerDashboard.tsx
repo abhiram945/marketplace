@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -52,8 +51,7 @@ const BuyerDashboard: React.FC = () => {
             <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 {mockProducts.slice(0, 4).map(product => (
                     <Link to={`/products/${product.id}`} key={product.id} className="border dark:border-gray-700 rounded-lg p-4 transition-shadow hover:shadow-md">
-                        <img src={product.imageUrl} alt={product.title} className="w-full h-32 object-cover rounded"/>
-                        <h3 className="mt-2 font-semibold text-gray-800 dark:text-gray-200">{product.title}</h3>
+                        <h3 className="font-semibold text-gray-800 dark:text-gray-200">{product.title}</h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400">${product.price}</p>
                     </Link>
                 ))}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../redux/store';
@@ -14,19 +14,17 @@ const ProductDetails: React.FC = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
   const { allProducts } = useSelector((state: RootState) => state.products);
-  const { subscriptions } = useSelector((state: RootState) => state.notifications);
   const { items: cartItems } = useSelector((state: RootState) => state.cart);
-  const [notified, setNotified] = useState<string | null>(null);
+  const { subscriptions } = useSelector((state: RootState) => state.notifications);
 
   const product = allProducts.find(p => p.id === id);
   const isInCart = product ? cartItems.some(item => item.id === product.id) : false;
+  const isPriceSubscribed = product ? subscriptions.some(s => s.productId === product.id && s.type === 'price') : false;
+  const isStockSubscribed = product ? subscriptions.some(s => s.productId === product.id && s.type === 'stock') : false;
 
   if (!product) {
     return <div className="text-center py-10">Product not found.</div>;
   }
-  
-  const isPriceSubscribed = subscriptions.some(s => s.productId === product.id && s.type === 'price');
-  const isStockSubscribed = subscriptions.some(s => s.productId === product.id && s.type === 'stock');
   
   const relatedProducts = allProducts.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
 
@@ -36,13 +34,12 @@ const ProductDetails: React.FC = () => {
     }
   };
 
-  const handleNotificationClick = (type: 'price' | 'stock') => {
-    if (role === 'vendor') {
-      setNotified(type);
-      setTimeout(() => setNotified(null), 2000);
-    } else {
-      dispatch(toggleSubscription({ productId: product.id, type, productTitle: product.title }));
-    }
+  const handleToggleSubscription = (type: 'price' | 'stock') => {
+    dispatch(toggleSubscription({
+        productId: product.id,
+        type,
+        productTitle: product.title,
+    }));
   };
 
   return (
@@ -52,11 +49,7 @@ const ProductDetails: React.FC = () => {
       </button>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          <div>
-            <img src={product.imageUrl} alt={product.title} className="w-full h-auto rounded-lg object-cover" />
-          </div>
-          <div>
+        <div>
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white">{product.title}</h1>
             <p className="text-gray-500 dark:text-gray-400 mt-2">from {product.brand}</p>
             <div className="flex items-center mt-4">
@@ -84,29 +77,44 @@ const ProductDetails: React.FC = () => {
             
             <div className="mt-8 flex flex-col space-y-3">
               {role === 'buyer' && (
-                <button 
-                  onClick={handleAddToCart}
-                  disabled={isInCart}
-                  className={`w-full flex items-center justify-center px-8 py-3 text-white text-base font-medium rounded-md transition-colors ${
-                      isInCart 
-                      ? 'bg-green-500 cursor-not-allowed' 
-                      : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
-                >
-                  <ShoppingCart className="w-5 h-5 mr-2" />
-                  {isInCart ? 'Added in Cart' : 'Add to Cart'}
-                </button>
+                <>
+                  <button 
+                    onClick={handleAddToCart}
+                    disabled={isInCart}
+                    className={`w-full flex items-center justify-center px-8 py-3 text-white text-base font-medium rounded-md transition-colors ${
+                        isInCart 
+                        ? 'bg-green-500 cursor-not-allowed' 
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
+                  >
+                    <ShoppingCart className="w-5 h-5 mr-2" />
+                    {isInCart ? 'Added in Cart' : 'Add to Cart'}
+                  </button>
+                  <button
+                    onClick={() => handleToggleSubscription('price')}
+                    className={`w-full flex items-center justify-center px-8 py-3 border text-base font-medium rounded-md transition-colors ${
+                        isPriceSubscribed
+                        ? 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100'
+                        : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <Bell className="w-5 h-5 mr-2" />
+                    {isPriceSubscribed ? 'Price Alert Active' : 'Notify on Price Drop'}
+                  </button>
+                  <button
+                    onClick={() => handleToggleSubscription('stock')}
+                    className={`w-full flex items-center justify-center px-8 py-3 border text-base font-medium rounded-md transition-colors ${
+                        isStockSubscribed
+                        ? 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100'
+                        : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <Bell className="w-5 h-5 mr-2" />
+                    {isStockSubscribed ? 'Stock Alert Active' : 'Notify when in Stock'}
+                  </button>
+                </>
               )}
-               <div className="flex space-x-2 text-sm">
-                <button onClick={() => handleNotificationClick('price')} className={`w-1/2 flex items-center justify-center p-3 rounded-md transition-colors ${role === 'buyer' && isPriceSubscribed ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'}`}>
-                    <Bell className="w-4 h-4 mr-1"/> {notified === 'price' ? 'Notified ✓' : (role === 'vendor' ? 'Notify Buyers (Price)' : 'Notify on Price Drop')}
-                </button>
-                <button onClick={() => handleNotificationClick('stock')} className={`w-1/2 flex items-center justify-center p-3 rounded-md transition-colors ${role === 'buyer' && isStockSubscribed ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'}`}>
-                   <Bell className="w-4 h-4 mr-1"/> {notified === 'stock' ? 'Notified ✓' : (role === 'vendor' ? 'Notify Buyers (Stock)' : 'Notify on Stock Recharge')}
-                </button>
             </div>
-            </div>
-          </div>
         </div>
       </div>
       

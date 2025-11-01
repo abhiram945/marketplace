@@ -5,7 +5,7 @@ import AppRouter from './router/AppRouter';
 
 function App() {
   return (
-    <HashRouter basename='/marketplace'>
+    <HashRouter>
       <AppRouter />
     </HashRouter>
   );
