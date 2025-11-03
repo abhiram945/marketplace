@@ -15,7 +15,7 @@ export interface Product {
   category: string;
   location: string;
   price: number;
-  rating: number;
+  condition: string;
   minOrderQty: number;
   maxOrderQty: number;
   stockQty: number;

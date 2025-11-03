@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Product } from '../../types';
 import { addToCart } from '../../redux/slices/cartSlice';
-import { updateProduct } from '../../redux/slices/productSlice';
 import { toggleSubscription } from '../../redux/slices/notificationSlice';
 import { RootState } from '../../redux/store';
-import { Star, ShoppingCart, Edit, CheckCircle as CheckIcon, X as XIcon, Bell } from '../icons';
+import { ShoppingCart, Edit, Tag, Package } from '../icons';
 import { useAuth } from '../../hooks/useAuth';
-import Modal from '../common/Modal';
 
 interface ProductCardProps {
   product: Product;
@@ -19,25 +17,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { role } = useAuth();
   const { items: cartItems } = useSelector((state: RootState) => state.cart);
   const { subscriptions } = useSelector((state: RootState) => state.notifications);
-
-  const [isEditingPrice, setIsEditingPrice] = useState(false);
-  const [newPrice, setNewPrice] = useState(product.price);
-  const [isEditingStock, setIsEditingStock] = useState(false);
-  const [newStockQty, setNewStockQty] = useState(product.stockQty);
   
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalContent, setModalContent] = useState({ title: '', message: '' });
+  const [quantity, setQuantity] = useState(product.minOrderQty);
+  const [error, setError] = useState('');
 
   const isInCart = cartItems.some(item => item.id === product.id);
   const isPriceSubscribed = subscriptions.some(s => s.productId === product.id && s.type === 'price');
   const isStockSubscribed = subscriptions.some(s => s.productId === product.id && s.type === 'stock');
-  
-  const handleAddToCart = () => {
-    if (role === 'buyer' && !isInCart) {
-        dispatch(addToCart(product));
-    }
-  };
 
+  useEffect(() => {
+    if (isInCart) {
+      const cartItem = cartItems.find(item => item.id === product.id);
+      if(cartItem) setQuantity(cartItem.quantity);
+    } else {
+      setQuantity(product.minOrderQty);
+    }
+  }, [isInCart, cartItems, product]);
+  
   const handleToggleSubscription = (type: 'price' | 'stock') => {
     dispatch(toggleSubscription({
       productId: product.id,
@@ -46,175 +42,114 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     }));
   };
 
-  const showModal = (title: string, message: string) => {
-    setModalContent({ title, message });
-    setIsModalOpen(true);
-  };
-
-  const handlePriceSave = () => {
-    if (newPrice > product.price) {
-      showModal("Invalid Price Change", "Price cannot be increased.");
-      setNewPrice(product.price);
-      setIsEditingPrice(false);
-      return;
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valueStr = e.target.value;
+    if (valueStr === '') {
+        setQuantity(NaN);
+        setError('');
+        return;
     }
-
-    if (newPrice > 0) {
-      dispatch(updateProduct({ ...product, price: newPrice }));
-      showModal("Price Updated", "Buyers will be notified.");
-      setIsEditingPrice(false);
-    } else {
-      setNewPrice(product.price);
-    }
-  };
-
-  const handleStockSave = () => {
-    if (newStockQty < product.stockQty) {
-      showModal("Invalid Stock Change", "Stock quantity cannot be decreased.");
-      setNewStockQty(product.stockQty);
-      setIsEditingStock(false);
-      return;
-    }
+    const value = parseInt(valueStr, 10);
+    setQuantity(value);
     
-    if (newStockQty >= 0) {
-        dispatch(updateProduct({ ...product, stockQty: newStockQty }));
-        showModal("Stock Updated", "Buyers will be notified.");
-        setIsEditingStock(false);
+    if (isNaN(value)) {
+        setError('Invalid number');
+    } else if (value < product.minOrderQty) {
+      setError(`Min is ${product.minOrderQty}`);
+    } else if (value > product.maxOrderQty) {
+      setError(`Max is ${product.maxOrderQty}`);
     } else {
-        setNewStockQty(product.stockQty);
+      setError('');
+    }
+  };
+
+  const handleAddToCart = () => {
+    if (!error && !isNaN(quantity)) {
+      dispatch(addToCart({ product, quantity }));
     }
   };
 
   return (
-    <>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden w-full">
-        <div className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
-          {/* Column 1 & 2: Main Info & Details */}
-          <div className="md:col-span-2">
-            <Link to={`/products/${product.id}`} className="block">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">{product.title}</h3>
-            </Link>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{product.category} by <span className="font-medium">{product.brand}</span></p>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Location: {product.location}</p>
-            <div className="flex items-center mt-2">
-              <div className="flex items-center">
-                <Star className="w-5 h-5 text-yellow-400" />
-                <span className="ml-1 text-gray-600 dark:text-gray-300 text-sm">{product.rating}</span>
-              </div>
-            </div>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden w-full p-4">
+      <div className="grid grid-cols-12 gap-4 items-center">
+          
+          <div className="col-span-12 md:col-span-3">
+              <Link to={`/products/${product.id}`} className="block">
+                  <h3 className="font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">{product.title}</h3>
+              </Link>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{product.category} by <span className="font-medium">{product.brand}</span></p>
           </div>
 
-          {/* Column 3: Stats & Price */}
-          <div className="md:col-span-1">
-            <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
-              <p>MOQ: <span className="font-semibold text-gray-800 dark:text-gray-200">{product.minOrderQty} units</span></p>
-              <p>Max Order: <span className="font-semibold text-gray-800 dark:text-gray-200">{product.maxOrderQty} units</span></p>
-              <div className="flex items-center">
-                <span className="mr-1">In Stock:</span>
-                {role === 'vendor' && isEditingStock ? (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      value={newStockQty}
-                      onChange={(e) => setNewStockQty(parseInt(e.target.value, 10) || 0)}
-                      className="w-24 p-1 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                      min={product.stockQty}
-                      autoFocus
-                    />
-                    <button onClick={handleStockSave} className="text-green-500 hover:text-green-600"><CheckIcon className="w-5 h-5" /></button>
-                    <button onClick={() => { setIsEditingStock(false); setNewStockQty(product.stockQty); }} className="text-red-500 hover:text-red-600"><XIcon className="w-5 h-5" /></button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <span className={`font-semibold ${product.stockQty < 100 ? 'text-red-500' : 'text-green-500'}`}>{product.stockQty} units</span>
-                    {role === 'vendor' && (
-                      <button onClick={() => setIsEditingStock(true)} className="ml-1 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="mt-4 text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-              {role === 'vendor' && isEditingPrice ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">$</span>
-                  <input
-                    type="number"
-                    value={newPrice}
-                    onChange={(e) => setNewPrice(parseFloat(e.target.value))}
-                    className="w-24 p-1 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    step="0.01"
-                    autoFocus
-                  />
-                  <button onClick={handlePriceSave} className="text-green-500 hover:text-green-600"><CheckIcon className="w-6 h-6" /></button>
-                  <button onClick={() => { setIsEditingPrice(false); setNewPrice(product.price); }} className="text-red-500 hover:text-red-600"><XIcon className="w-6 h-6" /></button>
-                </div>
-              ) : (
-                <>
-                  <span>${product.price.toFixed(2)}</span>
-                  {role === 'vendor' && (
-                    <button onClick={() => setIsEditingPrice(true)} className="ml-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400">
-                      <Edit className="w-5 h-5" />
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
+          <div className="col-span-6 md:col-span-1">
+              <p className="text-sm text-gray-700 dark:text-gray-300">{product.condition}</p>
           </div>
           
-          {/* Column 4: Actions */}
-          <div className="md:col-span-1 flex flex-col space-y-2 justify-start">
+          <div className="col-span-6 md:col-span-1 text-left">
+               <p className="text-lg font-bold text-gray-900 dark:text-white">${product.price.toFixed(2)}</p>
+          </div>
+          
+          <div className="col-span-6 md:col-span-1">
+              <p className="text-sm text-gray-700 dark:text-gray-300">{product.location} (EXW)</p>
+          </div>
+          
+          <div className="col-span-6 md:col-span-1">
+              <p className={`text-sm font-semibold ${product.stockQty < 100 ? 'text-red-500' : 'text-green-500'}`}>{product.stockQty} units</p>
+          </div>
+
+          <div className="col-span-12 md:col-span-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Min: {product.minOrderQty}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Max: {product.maxOrderQty}</p>
+          </div>
+          
+          <div className="col-span-12 md:col-span-3 flex items-center justify-end gap-2">
               {role === 'buyer' && (
-                  <>
-                      <button 
-                          onClick={handleAddToCart} 
+                <>
+                  <div className="relative">
+                      <input
+                          type="number"
+                          value={isNaN(quantity) ? '' : quantity}
+                          onChange={handleQuantityChange}
+                          min={product.minOrderQty}
+                          max={product.maxOrderQty}
+                          className="w-20 rounded-md border border-gray-300 py-1.5 text-center text-sm font-medium text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                          aria-label="Quantity"
                           disabled={isInCart}
-                          className={`w-full flex items-center justify-center px-4 py-2 text-white text-sm font-medium rounded-md transition-colors ${
-                              isInCart 
-                              ? 'bg-green-600 cursor-not-allowed' 
-                              : 'bg-blue-600 hover:bg-blue-700'
-                          }`}
-                      >
-                          <ShoppingCart className="w-5 h-5 mr-2" />
-                          {isInCart ? 'In Cart' : 'Add to Cart'}
-                      </button>
-                      <button
-                          onClick={() => handleToggleSubscription('price')}
-                          className={`w-full flex items-center justify-center px-4 py-2 border text-sm font-medium rounded-md transition-colors ${
-                              isPriceSubscribed
-                              ? 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100'
-                              : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                          }`}
-                      >
-                          <Bell className="w-5 h-5 mr-2" />
-                          {isPriceSubscribed ? 'Price Alert On' : 'Notify Price Drop'}
-                      </button>
-                      <button
-                          onClick={() => handleToggleSubscription('stock')}
-                          className={`w-full flex items-center justify-center px-4 py-2 border text-sm font-medium rounded-md transition-colors ${
-                              isStockSubscribed
-                              ? 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100'
-                              : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                          }`}
-                      >
-                          <Bell className="w-5 h-5 mr-2" />
-                          {isStockSubscribed ? 'Stock Alert On' : 'Notify Stock'}
-                      </button>
-                  </>
+                      />
+                      {error && <p className="absolute -bottom-4 left-0 text-red-500 text-xs">{error}</p>}
+                  </div>
+                  <button 
+                      onClick={handleAddToCart} 
+                      disabled={isInCart || !!error || isNaN(quantity)}
+                      className="flex items-center justify-center px-3 py-2 text-white text-sm font-medium rounded-md transition-colors w-28 disabled:cursor-not-allowed ${ isInCart ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400'}"
+                  >
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      {isInCart ? 'In Cart' : 'Add'}
+                  </button>
+                  <button
+                      onClick={() => handleToggleSubscription('price')}
+                      title={isPriceSubscribed ? 'Turn off price alerts' : 'Notify on price drop'}
+                      className={`p-2 rounded-full transition-colors ${ isPriceSubscribed ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                  >
+                      <Tag className="w-5 h-5" />
+                  </button>
+                  <button
+                      onClick={() => handleToggleSubscription('stock')}
+                      title={isStockSubscribed ? 'Turn off stock alerts' : 'Notify when in stock'}
+                      className={`p-2 rounded-full transition-colors ${ isStockSubscribed ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                  >
+                      <Package className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+              {role === 'vendor' && (
+                  <Link to={`/edit-product/${product.id}`} className="flex items-center justify-center px-4 py-2 bg-gray-600 text-white font-medium rounded-md hover:bg-gray-700">
+                      <Edit className="w-5 h-5 mr-2" />
+                      Edit
+                  </Link>
               )}
           </div>
-        </div>
       </div>
-       <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        title={modalContent.title}
-      >
-        <p>{modalContent.message}</p>
-      </Modal>
-    </>
+    </div>
   );
 };
 

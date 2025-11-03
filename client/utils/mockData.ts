@@ -7,6 +7,13 @@ export const mockUsers: User[] = [
   { id: '2', fullName: 'Bob Vendor', email: 'vendor@example.com', password: 'Password123', companyName: 'SellCo', role: 'vendor' },
 ];
 
+const productDetails = `
+Warranty: 1 year manufacturing warranty.
+Packaging: Branded box.
+Condition: New factory sealed.
+ETA: 2 days.
+`;
+
 export const mockProducts: Product[] = Array.from({ length: 24 }, (_, i) => ({
   id: `${i + 1}`,
   title: `Industrial Widget ${i + 1}`,
@@ -14,12 +21,12 @@ export const mockProducts: Product[] = Array.from({ length: 24 }, (_, i) => ({
   category: ['Electronics', 'Machinery', 'Tools', 'Safety Gear'][i % 4],
   location: ['New York', 'Los Angeles', 'Chicago', 'Houston'][i % 4],
   price: parseFloat((100 + Math.random() * 900).toFixed(2)),
-  rating: parseFloat((3.5 + Math.random() * 1.5).toFixed(1)),
+  condition: 'New, factory sealed',
   minOrderQty: (i % 5 + 1) * 10,
   maxOrderQty: (i % 5 + 1) * 100,
   stockQty: Math.floor(Math.random() * 1000),
   imageUrl: `https://picsum.photos/seed/${i+1}/400/300`,
-  description: 'A high-quality industrial widget designed for durability and performance. Made from premium materials, it ensures reliability in the most demanding environments.',
+  description: `A high-quality industrial widget designed for durability and performance. Made from premium materials, it ensures reliability in the most demanding environments.\n\n${productDetails}`,
   features: ['Durable Construction', 'High-Precision Engineering', 'Easy Installation', 'Corrosion Resistant'],
 }));
 

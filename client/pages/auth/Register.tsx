@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
@@ -58,6 +59,12 @@ const Register: React.FC = () => {
             Already have an account?{' '}
             <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
               Sign in
+            </Link>
+          </p>
+          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+            Have questions?{' '}
+            <Link to="/contact-us" className="font-medium text-blue-600 hover:text-blue-500">
+              Contact Us
             </Link>
           </p>
         </div>

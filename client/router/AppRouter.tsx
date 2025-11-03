@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Landing from '../pages/Landing';
@@ -14,6 +15,8 @@ import MainLayout from '../components/common/MainLayout';
 import { useAuth } from '../hooks/useAuth';
 import Cart from '../pages/Cart';
 import AddProduct from '../pages/products/AddProduct';
+import ContactUs from '../pages/ContactUs';
+import EditProduct from '../pages/products/EditProduct';
 
 const AppRouter = () => {
     const { isAuthenticated, role } = useAuth();
@@ -23,6 +26,7 @@ const AppRouter = () => {
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/contact-us" element={<ContactUs />} />
             
             <Route 
                 path="/dashboard"
@@ -49,6 +53,12 @@ const AppRouter = () => {
             <Route path="/add-product" element={
                 <ProtectedRoute allowedRoles={['vendor']}>
                     <MainLayout><AddProduct /></MainLayout>
+                </ProtectedRoute>
+            } />
+
+            <Route path="/edit-product/:id" element={
+                <ProtectedRoute allowedRoles={['vendor']}>
+                    <MainLayout><EditProduct /></MainLayout>
                 </ProtectedRoute>
             } />
 

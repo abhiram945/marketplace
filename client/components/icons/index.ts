@@ -1,3 +1,4 @@
+
 export { default as AlertCircle } from './AlertCircle';
 export { default as Bell } from './Bell';
 export { default as Building } from './Building';
@@ -10,6 +11,7 @@ export { default as LogOut } from './LogOut';
 export { default as Menu } from './Menu';
 export { default as Package } from './Package';
 export { default as PlusCircle } from './PlusCircle';
+export { default as Search } from './Search';
 export { default as ShoppingCart } from './ShoppingCart';
 export { default as Star } from './Star';
 export { default as Tag } from './Tag';

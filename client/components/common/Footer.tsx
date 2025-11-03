@@ -31,6 +31,7 @@ const Footer: React.FC = () => {
                 <ul className="mt-4 space-y-4">
                   <li><a href="#" className="text-base text-gray-400 hover:text-white">Pricing</a></li>
                   <li><a href="#" className="text-base text-gray-400 hover:text-white">Help Center</a></li>
+                  <li><Link to="/contact-us" className="text-base text-gray-400 hover:text-white">Contact Us</Link></li>
                 </ul>
               </div>
             </div>
